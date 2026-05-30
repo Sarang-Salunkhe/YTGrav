@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-#ea+9xk1pyo@a3hjdl@990l96g+=k6_+@df)o@5xxi(u1%dbxx
 DEBUG = False
 
 ALLOWED_HOSTS = [
-    "ytgrav-production.up.railway.app"
+    "ytgrav-backend.onrender.com",
+    "localhost",
+    "127.0.0.1"
 ]
 
 
