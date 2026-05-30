@@ -25,7 +25,9 @@ SECRET_KEY = 'django-insecure-#ea+9xk1pyo@a3hjdl@990l96g+=k6_+@df)o@5xxi(u1%dbxx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    "ytgrav-production.up.railway.app"
+]
 
 
 # Application definition
@@ -125,7 +127,9 @@ STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = [
+    "https://yt-grav.vercel.app"
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
