@@ -527,7 +527,7 @@ function App() {
 
   const fetchProgress = async () => {
     try {
-      const response = await axios.get("http://127.0.0.1:8000/api/progress/");
+      const response = await axios.get("https://ytgrav-production.up.railway.app/api/progress/");
       setProgress(response.data.progress);
     } catch (error) { console.log(error); }
   };
@@ -536,7 +536,7 @@ function App() {
     if (formats[url]) return;
     const tid = notify.loading("Fetching available qualities…");
     try {
-      const response = await axios.post("http://127.0.0.1:8000/api/formats/", { url });
+      const response = await axios.post("https://ytgrav-production.up.railway.app/api/formats/", { url });
       setFormats((prev) => ({ ...prev, [url]: response.data }));
       notify.dismiss(tid);
       notify.success("Qualities loaded");
@@ -551,7 +551,7 @@ function App() {
     if (!query) return;
     try {
       setLoading(true);
-      const response = await axios.post("http://127.0.0.1:8000/api/search/", { query });
+      const response = await axios.post("https://ytgrav-production.up.railway.app/api/search/", { query });
       setVideos(response.data);
     } catch (error) {
       console.log(error);
@@ -567,7 +567,7 @@ function App() {
     const interval = setInterval(fetchProgress, 500);
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/download/video/",
+        "https://ytgrav-production.up.railway.app/api/download/video/",
         { url, format_id: formatId },
         { responseType: "blob" }
       );
@@ -600,7 +600,7 @@ function App() {
     const interval = setInterval(fetchProgress, 500);
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/download/mp3/",
+        "https://ytgrav-production.up.railway.app/api/download/mp3/",
         { url },
         { responseType: "blob" }
       );
