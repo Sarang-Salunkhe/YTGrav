@@ -1,5 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
+
+const API_URL = "https://ytgrav-backend.onrender.com";
+
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -527,7 +530,7 @@ function App() {
 
   const fetchProgress = async () => {
     try {
-      const response = await axios.get("https://ytgrav-production.up.railway.app/api/progress/");
+      const response = await axios.get(`${API_URL}/api/progress/`);
       setProgress(response.data.progress);
     } catch (error) { console.log(error); }
   };
@@ -536,7 +539,7 @@ function App() {
     if (formats[url]) return;
     const tid = notify.loading("Fetching available qualities…");
     try {
-      const response = await axios.post("https://ytgrav-production.up.railway.app/api/formats/", { url });
+      const response = await axios.post(`${API_URL}/api/formats/`, { url });
       setFormats((prev) => ({ ...prev, [url]: response.data }));
       notify.dismiss(tid);
       notify.success("Qualities loaded");
@@ -551,7 +554,7 @@ function App() {
     if (!query) return;
     try {
       setLoading(true);
-      const response = await axios.post("https://ytgrav-production.up.railway.app/api/search/", { query });
+      const response = await axios.post(`${API_URL}/api/search/`, { query });
       setVideos(response.data);
     } catch (error) {
       console.log(error);
@@ -567,7 +570,7 @@ function App() {
     const interval = setInterval(fetchProgress, 500);
     try {
       const response = await axios.post(
-        "https://ytgrav-production.up.railway.app/api/download/video/",
+        `${API_URL}/api/download/video/`,
         { url, format_id: formatId },
         { responseType: "blob" }
       );
@@ -600,7 +603,7 @@ function App() {
     const interval = setInterval(fetchProgress, 500);
     try {
       const response = await axios.post(
-        "https://ytgrav-production.up.railway.app/api/download/mp3/",
+        `${API_URL}/api/download/mp3/`,
         { url },
         { responseType: "blob" }
       );
