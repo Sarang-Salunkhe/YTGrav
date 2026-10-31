@@ -13,13 +13,13 @@ from urllib.parse import quote
 
 def clean_filename(filename):
     filename = urllib.parse.unquote(filename)
-    
+
     filename = re.sub(r'[<>:"/\\|?*]', '', filename)
-    
+
     filename = filename.encode('ascii', errors='ignore').decode('ascii')
-    
+
     filename = re.sub(r'\s+', ' ', filename).strip()
-    
+
     return filename
 
 
@@ -373,7 +373,7 @@ def download_video(request):
         }, status=400)
 
     try:
-        
+
         # Cleanup any .txt or .part files first
         cleanup_unwanted_files()
 
@@ -404,10 +404,14 @@ def download_video(request):
 
             'progress_hooks':
             [progress_hook],
-            
+
             'quiet': False,
-            
+
             'no_warnings': False,
+
+            'js_runtimes': {
+                'deno': {}
+            },
         }
 
         with yt_dlp.YoutubeDL(
@@ -426,7 +430,7 @@ def download_video(request):
 
         # Filter for actual video files, exclude .txt, .part, and other non-video formats
         video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov', '.flv']
-        
+
         video_files = [
             file for file in new_files
             if any(file.lower().endswith(ext) for ext in video_extensions)
@@ -460,7 +464,7 @@ def download_video(request):
                 DOWNLOAD_DIR,
                 all_video_files[0]
             )
-            
+
             filename = clean_filename(
                 os.path.basename(
                     latest_file
@@ -473,7 +477,7 @@ def download_video(request):
                 DOWNLOAD_DIR,
                 video_files[0]
             )
-            
+
             filename = os.path.basename(
                 latest_file
             )
@@ -515,7 +519,7 @@ def download_mp3(request):
         }, status=400)
 
     try:
-        
+
         # Cleanup any .txt or .part files first
         cleanup_unwanted_files()
 
@@ -602,7 +606,7 @@ def download_mp3(request):
 
             mp3_files[0]
         )
-        
+
         filename = clean_filename(
             os.path.basename(
                 latest_file

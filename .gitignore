@@ -1,35 +1,75 @@
-# React
+# =====================================
+# NODE.JS / REACT
+# =====================================
+
+node_modules/
 frontend/node_modules/
 frontend/dist/
+frontend/dist-ssr/
 
-# Django
-backend/__pycache__/
-backend/*.pyc
-backend/db.sqlite3
+# =====================================
+# PYTHON / DJANGO
+# =====================================
 
-# Downloads
-backend/downloads/
+__pycache__/
+*.py[cod]
+*.pyo
 
-# Virtual Environment
-backend/venv/
-backend/.venv/
 venv/
 .venv/
+backend/venv/
+backend/.venv/
 
-# VS Code
+.pytest_cache/
+.mypy_cache/
+
+# =====================================
+# DJANGO GENERATED FILES
+# =====================================
+
+backend/db.sqlite3
+backend/staticfiles/
+backend/media/
+
+# =====================================
+# DOWNLOADED MEDIA
+# =====================================
+
+backend/downloads/*
+!backend/downloads/.gitkeep
+
+# =====================================
+# ENVIRONMENT VARIABLES
+# =====================================
+
+.env
+.env.*
+!.env.example
+
+# =====================================
+# EDITORS
+# =====================================
+
 .vscode/
+.idea/
 
-# Refact
+# =====================================
+# PROJECT TOOLS
+# =====================================
+
 .refact/
 
-# OS Files
+# =====================================
+# OPERATING SYSTEM
+# =====================================
+
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Environment Variables
-.env
-.env.local
+# =====================================
+# LOGS
+# =====================================
 
-# Python cache
-**/__pycache__/
-*.pyc
+*.log
+npm-debug.log*
