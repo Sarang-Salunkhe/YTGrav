@@ -73,3 +73,28 @@ desktop.ini
 
 *.log
 npm-debug.log*
+
+# =====================================
+# LOCAL TEST DOWNLOADS
+# =====================================
+
+test-*.mp3
+test-*.mp4
+test-*.mkv
+test-*.webm
+
+# =====================================
+# BACKUPS
+# =====================================
+
+*_backup.py
+catalyst-native-backup/
+
+# =====================================
+# CATALYST LOCAL CONFIGURATION
+# =====================================
+
+.catalystrc
+catalyst-config/
+frontend/.catalyst/
+frontend/cli-config.json

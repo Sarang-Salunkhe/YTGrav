@@ -11,6 +11,9 @@ import re
 
 from urllib.parse import quote
 
+import shutil
+import tempfile
+
 def clean_filename(filename):
     filename = urllib.parse.unquote(filename)
 
@@ -26,6 +29,36 @@ def clean_filename(filename):
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOWNLOAD_DIR = os.path.join(BASE_DIR, "downloads")
 os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+def create_download_directory():
+    """Create an isolated directory for each download request."""
+    return tempfile.mkdtemp(
+        prefix="ytgrav_",
+        dir=DOWNLOAD_DIR
+    )
+
+
+def create_download_response(file_path, content_type, download_dir):
+    """Return a file response and remove its temporary directory after streaming."""
+    filename = clean_filename(os.path.basename(file_path))
+
+    response = FileResponse(
+        open(file_path, "rb"),
+        as_attachment=True,
+        filename=filename,
+        content_type=content_type
+    )
+
+    response["X-Filename"] = filename.encode(
+        "ascii", errors="replace"
+    ).decode("ascii")
+
+    # FileResponse closes the file and then cleans up the request directory.
+    response._resource_closers.append(
+        lambda: shutil.rmtree(download_dir, ignore_errors=True)
+    )
+
+    return response
 
 
 # =========================
@@ -363,271 +396,136 @@ def get_formats(request):
 
 @api_view(['POST'])
 def download_video(request):
-
     url = request.data.get('url')
     format_id = request.data.get('format_id')
 
     if not url:
-        return Response({
-            'error': 'No URL provided'
-        }, status=400)
+        return Response({'error': 'No URL provided'}, status=400)
+
+    download_dir = create_download_directory()
 
     try:
-
-        # Cleanup any .txt or .part files first
-        cleanup_unwanted_files()
-
         download_progress['progress'] = 0
 
-        before_files = set(
-            os.listdir(DOWNLOAD_DIR)
-        )
-
-        # Build format string safely
         if format_id:
-            # Use format with fallback to best audio
-            format_str = f'({format_id}+bestaudio/best)/(bestvideo+bestaudio)/best'
+            format_str = (
+                f'({format_id}+bestaudio/best)/'
+                f'(bestvideo+bestaudio)/best'
+            )
         else:
             format_str = 'bestvideo+bestaudio/best'
 
         ydl_opts = {
-
             'format': format_str,
-
-            'outtmpl':
-            f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
-
-            'merge_output_format':
-            'mp4',
-
+            'outtmpl': os.path.join(
+                download_dir, '%(title)s.%(ext)s'
+            ),
+            'merge_output_format': 'mp4',
             'overwrites': True,
-
-            'progress_hooks':
-            [progress_hook],
-
-            'quiet': False,
-
-            'no_warnings': False,
-
+            'progress_hooks': [progress_hook],
             'js_runtimes': {
                 'deno': {}
             },
+            'quiet': False,
+            'no_warnings': False,
         }
 
-        with yt_dlp.YoutubeDL(
-            ydl_opts
-        ) as ydl:
-
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        after_files = set(
-            os.listdir(DOWNLOAD_DIR)
+        video_extensions = (
+            '.mp4', '.mkv', '.webm', '.avi', '.mov', '.flv'
         )
-
-        new_files = list(
-            after_files - before_files
-        )
-
-        # Filter for actual video files, exclude .txt, .part, and other non-video formats
-        video_extensions = ['.mp4', '.mkv', '.webm', '.avi', '.mov', '.flv']
 
         video_files = [
-            file for file in new_files
-            if any(file.lower().endswith(ext) for ext in video_extensions)
+            f for f in os.listdir(download_dir)
+            if f.lower().endswith(video_extensions)
+            and not f.endswith('.part')
         ]
 
         if not video_files:
-            # If no new video files found, look for the most recent video file
-            all_video_files = [
-                file for file in os.listdir(DOWNLOAD_DIR)
-                if any(file.lower().endswith(ext) for ext in video_extensions)
-                and not file.endswith('.part')
-            ]
-
-            all_video_files.sort(
-                key=lambda x: os.path.getmtime(
-                    os.path.join(
-                        DOWNLOAD_DIR,
-                        x
-                    )
-                ),
-                reverse=True
+            raise FileNotFoundError(
+                'Video download completed but no video file was found.'
             )
 
-            if not all_video_files:
-                return Response({
-                    'error':
-                    'Video download failed - no video files found'
-                }, status=500)
+        latest_file = os.path.join(download_dir, video_files[0])
 
-            latest_file = os.path.join(
-                DOWNLOAD_DIR,
-                all_video_files[0]
-            )
-
-            filename = clean_filename(
-                os.path.basename(
-                    latest_file
-                )
-            )
-
-        else:
-
-            latest_file = os.path.join(
-                DOWNLOAD_DIR,
-                video_files[0]
-            )
-
-            filename = os.path.basename(
-                latest_file
-            )
-
-        response = FileResponse(
-            open(latest_file, 'rb'),
-            as_attachment=False,
-            content_type='video/mp4'
+        return create_download_response(
+            latest_file,
+            'video/mp4',
+            download_dir
         )
 
-        # Properly encode filename in Content-Disposition header
-        safe_filename = clean_filename(filename)
-        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
-        response['X-Filename'] = safe_filename.encode('utf-8').decode('ascii', errors='replace')
-        response['Content-Type'] = 'video/mp4'
-
-        return response
-
     except Exception as e:
+        shutil.rmtree(download_dir, ignore_errors=True)
+        download_progress['progress'] = 0
 
-        return Response({
-            'error': str(e)
-        }, status=500)
-
-
+        return Response({'error': str(e)}, status=500)   
 # =========================
 # DOWNLOAD MP3 API
 # =========================
 
 @api_view(['POST'])
 def download_mp3(request):
-
     url = request.data.get('url')
 
     if not url:
+        return Response({'error': 'No URL provided'}, status=400)
 
-        return Response({
-            'error': 'No URL provided'
-        }, status=400)
+    download_dir = create_download_directory()
 
     try:
-
-        # Cleanup any .txt or .part files first
-        cleanup_unwanted_files()
-
-        download_progress[
-            'progress'
-        ] = 0
+        download_progress['progress'] = 0
 
         ydl_opts = {
-
-            'format':
-            'bestaudio/best',
-
-            'outtmpl':
-            f'{DOWNLOAD_DIR}/%(title)s.%(ext)s',
-
-            'postprocessors': [
-                {
-                    'key':
-                    'FFmpegExtractAudio',
-
-                    'preferredcodec':
-                    'mp3',
-
-                    'preferredquality':
-                    '192',
-
-                    'nopostoverwrites':
-                    False,
-                }
-            ],
-
-            'progress_hooks':
-            [progress_hook],
-
+            'format': 'bestaudio/best',
+            'outtmpl': os.path.join(
+                download_dir, '%(title)s.%(ext)s'
+            ),
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+                'nopostoverwrites': False,
+            }],
+            'progress_hooks': [progress_hook],
+            'js_runtimes': {
+                'deno': {}
+            },
             'extractor_args': {
                 'youtube': {
-                    'player_client':
-                    ['android']
+                    'player_client': ['android']
                 }
             },
-
             'overwrites': True,
-
             'quiet': False,
-
             'no_warnings': False,
-
         }
 
-        with yt_dlp.YoutubeDL(
-            ydl_opts
-        ) as ydl:
-
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
 
-        # Filter for MP3 files only, excluding .txt, .part, and other artifacts
         mp3_files = [
-            file for file in os.listdir(DOWNLOAD_DIR)
-            if file.lower().endswith('.mp3')
-            and not file.endswith('.part')
+            f for f in os.listdir(download_dir)
+            if f.lower().endswith('.mp3')
         ]
 
-        mp3_files.sort(
-            key=lambda x:
-            os.path.getmtime(
-                os.path.join(
-                    DOWNLOAD_DIR,
-                    x
-                )
-            ),
-            reverse=True
-        )
-
         if not mp3_files:
-            # Check if FFmpeg is the issue
-            return Response({
-                'error':
-                'MP3 conversion failed. Please ensure FFmpeg is installed and accessible.'
-            }, status=500)
-
-        latest_file = os.path.join(
-
-            DOWNLOAD_DIR,
-
-            mp3_files[0]
-        )
-
-        filename = clean_filename(
-            os.path.basename(
-                latest_file
+            raise FileNotFoundError(
+                'MP3 conversion completed but no MP3 file was found.'
             )
+
+        latest_file = os.path.join(download_dir, mp3_files[0])
+
+        return create_download_response(
+            latest_file,
+            'audio/mpeg',
+            download_dir
         )
-
-        response = FileResponse(
-            open(latest_file, 'rb'),
-            as_attachment=False,
-            content_type='audio/mpeg'
-        )
-
-        # Properly encode filename in Content-Disposition header
-        safe_filename = clean_filename(filename)
-        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
-        response['X-Filename'] = safe_filename.encode('utf-8').decode('ascii', errors='replace')
-        response['Content-Type'] = 'audio/mpeg'
-
-        return response
 
     except Exception as e:
+        shutil.rmtree(download_dir, ignore_errors=True)
+        download_progress['progress'] = 0
 
         return Response({
             'error': str(e)

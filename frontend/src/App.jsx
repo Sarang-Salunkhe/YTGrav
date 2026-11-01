@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API_URL = "https://ytgrav-backend.onrender.com";
+const API_URL = "https://ytgrav-backend-50047319906.development.catalystappsail.in";
 
 import toast, { Toaster } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -539,7 +539,10 @@ function App() {
     if (formats[url]) return;
     const tid = notify.loading("Fetching available qualities…");
     try {
-      const response = await axios.post(`${API_URL}/api/formats/`, { url });
+      const response = await axios.post(
+        `${API_URL}/api/formats/`,
+        new URLSearchParams({ url })
+      );
       setFormats((prev) => ({ ...prev, [url]: response.data }));
       notify.dismiss(tid);
       notify.success("Qualities loaded");
@@ -554,7 +557,10 @@ function App() {
     if (!query) return;
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/api/search/`, { query });
+      const response = await axios.post(
+        `${API_URL}/api/search/`,
+        new URLSearchParams({ query })
+      );
       setVideos(response.data);
     } catch (error) {
       console.log(error);
@@ -571,7 +577,7 @@ function App() {
     try {
       const response = await axios.post(
         `${API_URL}/api/download/video/`,
-        { url, format_id: formatId },
+        new URLSearchParams({ url, format_id: String(formatId) }),
         { responseType: "blob" }
       );
       const blob = new Blob([response.data], { type: "video/mp4" });
@@ -604,7 +610,7 @@ function App() {
     try {
       const response = await axios.post(
         `${API_URL}/api/download/mp3/`,
-        { url },
+        new URLSearchParams({ url }),
         { responseType: "blob" }
       );
       const blob = new Blob([response.data], { type: "audio/mpeg" });
