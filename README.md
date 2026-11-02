@@ -1,181 +1,258 @@
 # YTGrav
 
-**Pull Media at the Speed of Gravity.**
+### Pull Media at the Speed of Gravity.
 
-YTGrav is a browser-based media utility for searching YouTube videos, checking available video qualities, and downloading supported media as MP4 or MP3.
+**YTGrav** is a browser-based media utility that lets users search YouTube videos, inspect available media qualities, and download supported media in MP4 or MP3 format through a clean, responsive interface.
 
-**Live application:** https://ytgrav.onslate.in  
-**Source code:** https://github.com/Sarang-Salunkhe/YTGrav
+<p align="center">
+  <a href="https://ytgrav.onslate.in">
+    <strong>🌐 Visit YTGrav — Live Website</strong>
+  </a>
+</p>
 
-## Features
+<p align="center">
+  <a href="https://github.com/Sarang-Salunkhe/YTGrav">GitHub Repository</a>
+  ·
+  <a href="https://ytgrav.onslate.in">Live Application</a>
+</p>
 
-- **Video search:** search YouTube and browse up to 10 matching results.
-- **Quality detection:** inspect available formats, including 360p, 480p, 720p, 1080p, 1440p and 2160p when provided by the source.
-- **MP4 downloads:** use the best available quality or choose a listed format.
-- **MP3 extraction:** convert audio to MP3 using the configured 192 kbps setting.
-- **Download progress:** display progress while media is prepared.
-- **Local history:** keep recent download entries in browser local storage.
-- **Responsive UI:** dark interface, motion effects and toast notifications.
+---
 
-## Technology Stack
+## ✨ Features
 
-| Layer | Technologies |
+- **YouTube Search:** Search for videos and browse matching results.
+- **Quality Detection:** Fetch available media formats and resolutions, depending on the source.
+- **MP4 Downloads:** Download videos using the default available quality or select a specific quality.
+- **MP3 Downloads:** Extract audio and download it in MP3 format.
+- **Download Progress:** Track download preparation through the interface.
+- **Download History:** Keep recent download entries using browser local storage.
+- **Modern Interface:** Dark-themed UI with animations, responsive layouts, and toast notifications.
+
+## 🛠️ Technology Stack
+
+| Component | Technologies |
 |---|---|
-| Frontend | React 19, Vite 8, Tailwind CSS 4 |
-| UI and networking | Framer Motion, Axios, Lucide React, React Hot Toast |
-| Backend | Python 3.13, Django 5.2, Django REST Framework |
-| Media tools | yt-dlp, FFmpeg, Deno |
-| Hosting | Zoho Catalyst Slate (frontend), Zoho Catalyst AppSail (backend) |
+| Frontend | React 19, Vite 8 |
+| Styling | Tailwind CSS 4 |
+| UI & Animation | Framer Motion, Lucide React |
+| HTTP Requests | Axios |
+| Backend | Python 3.13, Django 5.2 |
+| API | Django REST Framework |
+| Media Extraction | yt-dlp |
+| Media Processing | FFmpeg |
+| JavaScript Runtime | Deno |
+| Frontend Hosting | Zoho Catalyst Slate |
+| Backend Hosting | Zoho Catalyst AppSail |
 
-## Architecture
+## 🏗️ Architecture
 
-1. The React frontend sends search terms or media URLs to the Django REST API.
-2. The backend uses yt-dlp to retrieve search results and inspect available formats.
-3. FFmpeg handles media merging and MP3 conversion. Deno is configured as a JavaScript runtime for yt-dlp.
-4. The backend returns the processed file to the browser for local saving.
+YTGrav follows a frontend-backend architecture.
 
-~~~text
-Browser
-  |
-  v
-React + Vite frontend (Catalyst Slate)
-  | HTTPS API requests
-  v
-Django REST API (Catalyst AppSail)
-  |
-  +-- yt-dlp  -- Search and media information
-  +-- FFmpeg  -- Merge / MP3 conversion
-  +-- Deno    -- JavaScript runtime
-  |
-  v
-File response to browser
-~~~
+1. The React frontend accepts search queries and media URLs.
+2. The Django REST API processes incoming requests.
+3. yt-dlp handles media search, information retrieval, and format extraction.
+4. FFmpeg handles media merging and audio conversion.
+5. The processed media is returned to the browser for downloading.
 
-## Repository Structure
+```text
+                  USER
+                    |
+                    v
+          React + Vite Frontend
+             (Catalyst Slate)
+                    |
+                 HTTPS
+                    |
+                    v
+             Django REST API
+             (Catalyst AppSail)
+                    |
+          +---------+---------+
+          |         |         |
+          v         v         v
+        yt-dlp    FFmpeg     Deno
+          |         |         |
+          +---------+---------+
+                    |
+                    v
+             Media Response
+                    |
+                    v
+             User's Browser
+```
 
-~~~text
+## 📂 Repository Structure
+
+```text
 YTGrav/
-|-- backend/
-|   |-- core/                 # Django project configuration
-|   |-- downloader/           # Search, format and download API
-|   |-- .env.example          # Backend environment template
-|   |-- Dockerfile            # AppSail custom-runtime container
-|   |-- manage.py
-|   `-- requirements.txt
-|
-`-- frontend/
-    |-- public/               # Public assets and YTGrav favicon
-    |-- src/                  # React application and styles
-    |-- index.html
-    |-- package.json
-    `-- vite.config.js
-~~~
+│
+├── backend/
+│   ├── core/                  # Django project configuration
+│   ├── downloader/            # Media API and processing logic
+│   ├── .env.example           # Environment variable template
+│   ├── Dockerfile             # AppSail deployment configuration
+│   ├── manage.py
+│   └── requirements.txt
+│
+└── frontend/
+    ├── public/                # Public assets and branding
+    ├── src/                   # React application and styles
+    ├── index.html
+    ├── package.json
+    └── vite.config.js
+```
 
-## API Reference
+## 🔌 API Reference
 
-All endpoints are prefixed with `/api/`. The frontend currently sends form-encoded POST data.
+All API endpoints are exposed through the Django backend under `/api/`.
 
-| Method | Endpoint | Parameters | Purpose |
+| Method | Endpoint | Parameters | Description |
 |---|---|---|---|
-| POST | `/api/search/` | `query` | Search YouTube and return matching videos. |
-| POST | `/api/info/` | `url` | Retrieve information about a media URL. |
-| POST | `/api/formats/` | `url` | Return available video formats and resolutions. |
-| POST | `/api/download/video/` | `url`, optional `format_id` | Download video as an MP4 response. |
-| POST | `/api/download/mp3/` | `url` | Extract audio and return an MP3 response. |
-| GET | `/api/progress/` | — | Retrieve the current download progress value. |
-| GET, POST | `/api/cleanup/` | — | Clean up unwanted temporary files. |
+| POST | `/api/search/` | `query` | Search for videos |
+| POST | `/api/info/` | `url` | Fetch media information |
+| POST | `/api/formats/` | `url` | Retrieve available formats |
+| POST | `/api/download/video/` | `url`, optional `format_id` | Download video as MP4 |
+| POST | `/api/download/mp3/` | `url` | Extract and download audio |
+| GET | `/api/progress/` | — | Retrieve download progress |
+| GET / POST | `/api/cleanup/` | — | Clean temporary files |
 
-Download responses include an `X-Filename` header when available.
+Download responses can include an `X-Filename` response header.
 
-## Run Locally
+## 💻 Run Locally
 
 ### Prerequisites
 
+Install the following before starting:
+
+- Git
 - Node.js 22
 - Python 3.13
-- FFmpeg installed and available on `PATH`
-- Deno installed and available on `PATH`
-- Git
+- FFmpeg
+- Deno
+
+FFmpeg and Deno must be accessible through your system's `PATH`.
 
 ### 1. Clone the repository
 
-~~~cmd
+```cmd
 git clone https://github.com/Sarang-Salunkhe/YTGrav.git
 cd YTGrav
-~~~
+```
 
-### 2. Set up the backend (Windows Command Prompt)
+### 2. Configure the backend
 
-~~~cmd
+Open Command Prompt:
+
+```cmd
 cd backend
 py -3.13 -m venv .venv
 .venv\Scripts\activate.bat
 pip install -r requirements.txt
 copy .env.example .env
-~~~
+```
 
-Edit `backend\.env` and set a unique local secret and development configuration:
+Configure your local `backend\.env` file:
 
-~~~dotenv
-DJANGO_SECRET_KEY=replace-with-a-long-random-secret
+```dotenv
+DJANGO_SECRET_KEY=your-local-secret-key
 DJANGO_DEBUG=True
 DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
 DATABASE_URL=
 FRONTEND_URL=http://localhost:5173
-~~~
+```
 
-Keep `.env` private. Do not commit secrets or production environment values.
+Use a unique secret key and never commit your `.env` file.
 
-Then migrate and start Django:
+Run database migrations and start the backend:
 
-~~~cmd
+```cmd
 python manage.py migrate
 python manage.py runserver
-~~~
+```
 
-The local API will be available at `http://127.0.0.1:8000`.
+The local backend will be available at:
 
-### 3. Set up the frontend
+`http://127.0.0.1:8000`
 
-In a second Command Prompt window, from the repository root:
+### 3. Configure the frontend
 
-~~~cmd
-cd frontend
+Open a second Command Prompt window:
+
+```cmd
+cd YTGrav\frontend
 npm install
 npm run dev
-~~~
+```
 
-Vite normally serves the frontend at `http://localhost:5173`.
+The frontend will normally be available at:
 
-**Local API connection:** the frontend currently defines `API_URL` in `frontend/src/App.jsx`. Set it to `http://127.0.0.1:8000` when using the local Django server. The checked-in deployment configuration points to the hosted Catalyst backend.
+`http://localhost:5173`
 
-FFmpeg and Deno must be installed and available on `PATH` for the media-processing configuration.
+**Important:** The frontend API URL is currently configured in `frontend/src/App.jsx` for the hosted backend. For local development, point `API_URL` to `http://127.0.0.1:8000`.
 
-## Deployment
+## 🚀 Deployment
 
-- **Frontend:** Catalyst Slate, connected to the `main` branch. Project root: `frontend`; install command: `npm install`; build command: `npm run build`; build output: `dist`; Node runtime: 22.
-- **Backend:** Catalyst AppSail using `backend/Dockerfile`. The container installs Python dependencies, FFmpeg and Deno, then starts Django with Gunicorn.
+YTGrav uses Zoho Catalyst for hosting.
 
-The frontend backend address is configured in `frontend/src/App.jsx`. When changing environments, point it to the intended AppSail service and configure that environment's `FRONTEND_URL`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_SECRET_KEY`, and any other required variables.
+### Frontend — Catalyst Slate
 
-## Launch Verification
+| Configuration | Value |
+|---|---|
+| Framework | React + Vite |
+| Runtime | Node 22 |
+| Repository | `Sarang-Salunkhe/YTGrav` |
+| Branch | `main` |
+| Root Path | `./frontend` |
+| Install Command | `npm install` |
+| Build Command | `npm run build` |
+| Build Output | `dist` |
 
-The live deployment was manually tested for:
+### Backend — Catalyst AppSail
 
-- YouTube search
-- Available-quality fetching
-- MP3 download
-- MP4 download using the default quality
-- MP4 download using a selected quality (tested at 1080p)
+The Django backend is containerized using `backend/Dockerfile`.
 
-## Responsible Use
+The deployment includes:
 
-Use YTGrav only for media that you own, have permission to download, or are otherwise legally allowed to save. You are responsible for complying with applicable copyright laws and the terms that apply to the source service. YTGrav is an independent project and is not affiliated with or endorsed by YouTube or Google.
+- Python dependencies
+- FFmpeg
+- Deno
+- Gunicorn
+- Django REST API
 
-## License
+Backend environment variables must be configured securely through Catalyst.
 
-No license has been added to this repository yet. Unless and until a license is provided, no permission to reuse, modify, or redistribute this code should be assumed.
+## ✅ Launch Verification
+
+The live application has been manually tested successfully for:
+
+- [x] YouTube search
+- [x] Available-quality fetching
+- [x] MP3 download
+- [x] MP4 download using default quality
+- [x] MP4 download using a selected quality
+- [x] MP4 download at 1080p
+
+**Launch status: Successfully deployed and tested.**
+
+## ⚖️ Responsible Use
+
+YTGrav is intended for media that users own, have permission to download, or are otherwise legally permitted to save.
+
+Users are responsible for respecting applicable copyright laws, intellectual property rights, and the terms of the source platforms.
+
+YTGrav is an independent project and is not affiliated with, endorsed by, or officially associated with YouTube or Google.
+
+## 📜 License
+
+No open-source license has currently been added to this repository.
+
+Until a license is added, all rights remain with the copyright holder. Do not assume permission to redistribute, modify, or reuse the source code.
 
 ---
 
-**YTGrav — Pull Media at the Speed of Gravity.**
+<p align="center">
+  <strong>YTGrav</strong><br/>
+  Pull Media at the Speed of Gravity.
+  <br/><br/>
+  Built with curiosity, code, and persistence. 🚀
+</p>
